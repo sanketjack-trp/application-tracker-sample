@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #faf9f6;
+    --cream: #f3f0e8;
+    --accent: #c84b31;
+    --accent2: #2e6b9e;
+    --accent3: #3d9970;
+    --muted: #7a7a8a;
+    --border: #e0ddd5;
+    --shadow: 0 4px 24px rgba(26,26,46,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+  header { background: var(--ink); color: var(--paper); padding: 26px 48px; display: flex; align-items: baseline; gap: 16px; }
+  header h1 { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; }
+  header span { font-size: 13px; color: #9999aa; }
+  .container { max-width: 1140px; margin: 0 auto; padding: 44px 32px; }
+  .layout { display: grid; grid-template-columns: 390px 1fr; gap: 36px; align-items: start; }
+  .panel { background: #fff; border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+  .panel-header { background: var(--cream); padding: 20px 26px; border-bottom: 1px solid var(--border); }
+  .panel-header h2 { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; }
+  .panel-header p { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .panel-body { padding: 26px; }
+  .field-group { margin-bottom: 15px; }
+  .field-group label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.7px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .field-group input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); background: var(--paper); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  .field-group input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(46,107,158,0.1); }
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 13px; }
+  .phase-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .phase-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .phase-name { flex: 1; font-size: 13px; }
+  .phase-days-input { width: 66px; padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; text-align: center; outline: none; transition: border-color 0.2s; }
+  .phase-days-input:focus { border-color: var(--accent2); }
+  .days-label { font-size: 12px; color: var(--muted); width: 28px; }
+  .btn-generate { width: 100%; padding: 13px; background: var(--ink); color: #fff; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 20px; transition: background 0.2s, transform 0.1s; }
+  .btn-generate:hover { background: #2d2d4a; transform: translateY(-1px); }
+  .results-panel { display: flex; flex-direction: column; gap: 20px; }
+  .summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+  .card { background: #fff; border-radius: 14px; padding: 17px 20px; box-shadow: var(--shadow); }
+  .card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .card-value { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; line-height: 1; }
+  .card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .card.warn .card-value { color: var(--accent); }
+  .card.ok .card-value { color: var(--accent3); }
+  .gantt-panel { background: #fff; border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+  .gantt-top { padding: 18px 26px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .gantt-top h2 { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; }
+  .cbadge { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; background: #fff3cd; color: #856404; display: none; }
+  .cbadge.on { display: inline-block; }
+  .gantt-body { padding: 22px 26px; overflow-x: auto; }
+  .gantt-chart { min-width: 540px; }
+  .g-row { display: flex; align-items: center; margin-bottom: 11px; }
+  .g-label { width: 175px; flex-shrink: 0; font-size: 12px; font-weight: 500; padding-right: 12px; }
+  .g-track { flex: 1; height: 32px; background: var(--cream); border-radius: 6px; position: relative; }
+  .g-bar { position: absolute; top: 3px; height: 26px; border-radius: 5px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; min-width: 4px; }
+  .g-bar.cx::after { content: ' ⚡'; }
+  .g-days { width: 62px; flex-shrink: 0; font-size: 12px; color: var(--muted); padding-left: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 11px; padding: 14px 26px; border-top: 1px solid var(--border); }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+  .lead-card { background: #fff; border-radius: 14px; padding: 17px 22px; box-shadow: var(--shadow); display: none; }
+  .lead-card.on { display: block; }
+  .lead-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+  .lf label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); display: block; margin-bottom: 3px; }
+  .lf span { font-size: 14px; font-weight: 500; }
+  .empty-state { text-align: center; padding: 56px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 40px; margin-bottom: 14px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; line-height: 1.7; }
+  .errmsg { background: #fef2f2; color: var(--accent); border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-top: 12px; display: none; }
+  .errmsg.on { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Application Tracker</h1>
+  <span>School Admission Timeline Planner</span>
+</header>
+
+<div class="container">
+  <div class="layout">
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>New Lead</h2>
+        <p>Fill in applicant details to generate timeline</p>
+      </div>
+      <div class="panel-body">
+        <div class="section-label">Applicant Info</div>
+        <div class="field-group"><label>Full Name *</label><input type="text" id="fn" placeholder="e.g. Aryan Mehta"></div>
+        <div class="field-group"><label>Email Address *</label><input type="email" id="fe" placeholder="aryan@email.com"></div>
+        <div class="field-group"><label>Phone Number</label><input type="tel" id="fp" placeholder="+91 98765 43210"></div>
+        <div class="field-group"><label>School Applying To *</label><input type="text" id="fs" placeholder="e.g. IIM Ahmedabad"></div>
+        <div class="divider"></div>
+        <div class="section-label">Key Dates</div>
+        <div class="field-group"><label>Form Fill Date *</label><input type="date" id="fd1"></div>
+        <div class="field-group"><label>Application Deadline *</label><input type="date" id="fd2"></div>
+        <div class="divider"></div>
+        <div class="section-label">Phase Durations (Ideal Days)</div>
+        <div id="phase-inputs"></div>
+        <div class="errmsg" id="errmsg"></div>
+        <button class="btn-generate" onclick="gen()">Generate Timeline &rarr;</button>
+      </div>
+    </div>
+
+    <div class="results-panel">
+      <div class="lead-card" id="lead-card"><div class="lead-grid" id="lead-grid"></div></div>
+      <div class="summary-cards" id="sumcards" style="display:none">
+        <div class="card" id="c-avail"><div class="card-label">Days Available</div><div class="card-value" id="v-avail">—</div><div class="card-sub">until deadline</div></div>
+        <div class="card" id="c-req"><div class="card-label">Days Required</div><div class="card-value" id="v-req">—</div><div class="card-sub">across all phases</div></div>
+        <div class="card" id="c-buf"><div class="card-label">Buffer / Slack</div><div class="card-value" id="v-buf">—</div><div class="card-sub" id="s-buf">days</div></div>
+      </div>
+      <div class="gantt-panel">
+        <div class="gantt-top"><h2>Application Timeline</h2><span class="cbadge" id="cbadge">&#9889; Phases Compressed</span></div>
+        <div class="gantt-body"><div id="gantt">
+          <div class="empty-state"><div class="icon">&#128203;</div><p>Fill in the form on the left and click<br><strong>Generate Timeline</strong> to see the Gantt chart.</p></div>
+        </div></div>
+        <div class="legend" id="legend" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PHASES = [
+  { name:"Document Preparation",  def:21, color:"#2e6b9e", pri:1 },
+  { name:"Application Submission", def:14, color:"#c84b31", pri:2 },
+  { name:"Interview Preparation",  def:30, color:"#3d9970", pri:3 },
+  { name:"Waiting / Review",       def:45, color:"#8e44ad", pri:4 },
+  { name:"Decision & Enrollment",  def:14, color:"#d4a017", pri:5 },
+];
+
+document.getElementById('fd1').value = new Date().toISOString().split('T')[0];
+
+const pEl = document.getElementById('phase-inputs');
+PHASES.forEach((p,i) => {
+  const d = document.createElement('div');
+  d.className = 'phase-row';
+  d.innerHTML = `<div class="phase-dot" style="background:${p.color}"></div><div class="phase-name">${p.name}</div><input class="phase-days-input" type="number" id="p${i}" value="${p.def}" min="1" max="999"><span class="days-label">days</span>`;
+  pEl.appendChild(d);
+});
+
+function pd(s){ const[y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function diff(a,b){ return Math.round((b-a)/86400000); }
+function fmt(d){ return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+function addD(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+
+function gen() {
+  const name=document.getElementById('fn').value.trim();
+  const email=document.getElementById('fe').value.trim();
+  const phone=document.getElementById('fp').value.trim();
+  const school=document.getElementById('fs').value.trim();
+  const s1=document.getElementById('fd1').value;
+  const s2=document.getElementById('fd2').value;
+  const err=document.getElementById('errmsg');
+
+  if(!name||!email||!school||!s1||!s2){
+    err.className='errmsg on'; err.textContent='Please fill in all required fields (name, email, school, both dates).'; return;
+  }
+  const start=pd(s1), end=pd(s2);
+  const avail=diff(start,end);
+  if(avail<=0){ err.className='errmsg on'; err.textContent='Deadline must be after the start date.'; return; }
+  err.className='errmsg';
+
+  let phases=PHASES.map((p,i)=>({...p, days:Math.max(1,parseInt(document.getElementById('p'+i).value)||p.def), cx:false}));
+  const totalReq=phases.reduce((s,p)=>s+p.days,0);
+  let needCx=totalReq>avail;
+
+  let alloc=phases.map(p=>({...p}));
+  if(needCx){
+    let toReduce=totalReq-avail;
+    const order=[...alloc].sort((a,b)=>b.pri-a.pri);
+    for(const ph of order){
+      if(toReduce<=0) break;
+      const idx=alloc.findIndex(p=>p.name===ph.name);
+      const maxR=alloc[idx].days-1;
+      const r=Math.min(maxR,toReduce);
+      if(r>0){ alloc[idx].days-=r; alloc[idx].cx=true; toReduce-=r; }
+    }
+  }
+
+  const totalAlloc=alloc.reduce((s,p)=>s+p.days,0);
+  const buf=avail-totalAlloc;
+
+  document.getElementById('lead-card').className='lead-card on';
+  document.getElementById('lead-grid').innerHTML=`
+    <div class="lf"><label>Name</label><span>${name}</span></div>
+    <div class="lf"><label>Email</label><span>${email}</span></div>
+    <div class="lf"><label>Phone</label><span>${phone||'—'}</span></div>
+    <div class="lf"><label>School</label><span>${school}</span></div>`;
+
+  document.getElementById('sumcards').style.display='grid';
+  document.getElementById('v-avail').textContent=avail;
+  document.getElementById('v-req').textContent=totalReq;
+  document.getElementById('v-buf').textContent=buf>=0?'+'+buf:buf;
+  document.getElementById('c-req').className='card '+(needCx?'warn':'ok');
+  document.getElementById('c-buf').className='card '+(buf>=0?'ok':'warn');
+  document.getElementById('s-buf').textContent=buf>=0?'days buffer':'days short';
+  document.getElementById('cbadge').className='cbadge'+(needCx?' on':'');
+
+  let html='<div class="gantt-chart">';
+  // ruler
+  html+='<div style="display:flex;margin-bottom:10px;"><div style="width:175px;flex-shrink:0;"></div><div style="flex:1;position:relative;height:16px;">';
+  let rd=new Date(start.getFullYear(),start.getMonth()+1,1);
+  while(rd<=end){
+    const pct=(diff(start,rd)/avail)*100;
+    if(pct>=0&&pct<=100) html+=`<span style="position:absolute;left:${pct}%;font-size:10px;color:var(--muted);transform:translateX(-50%);white-space:nowrap;">${rd.toLocaleDateString('en-GB',{month:'short',year:'2-digit'})}</span>`;
+    rd=new Date(rd.getFullYear(),rd.getMonth()+1,1);
+  }
+  html+='</div><div style="width:62px;"></div></div>';
+
+  let cursor=new Date(start);
+  alloc.forEach(p=>{
+    const sp=(diff(start,cursor)/avail)*100;
+    const wp=(p.days/avail)*100;
+    const pe=addD(cursor,p.days);
+    const orig=PHASES.find(x=>x.name===p.name).def;
+    const tt=`${fmt(cursor)} to ${fmt(pe)} (${p.days} days${p.cx?' — compressed from '+orig:''})`; 
+    html+=`<div class="g-row">
+      <div class="g-label">${p.name}</div>
+      <div class="g-track">
+        <div class="g-bar${p.cx?' cx':''}" style="left:${sp}%;width:${wp}%;background:${p.color};" title="${tt}">${wp>8?p.days+'d':''}</div>
+      </div>
+      <div class="g-days">${p.days}d${p.cx?' ⚡':''}</div>
+    </div>`;
+    cursor=pe;
+  });
+
+  html+=`<div class="g-row" style="margin-top:6px;">
+    <div class="g-label" style="color:var(--accent);font-size:12px;font-weight:600;">&#127937; Deadline</div>
+    <div class="g-track">
+      <div style="position:absolute;right:0;top:0;width:3px;height:32px;background:var(--accent);border-radius:2px;"></div>
+      <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--accent);font-weight:600;">${fmt(end)}</div>
+    </div>
+    <div class="g-days"></div>
+  </div>`;
+
+  html+='</div>';
+  document.getElementById('gantt').innerHTML=html;
+
+  const leg=document.getElementById('legend');
+  leg.style.display='flex';
+  leg.innerHTML=alloc.map(p=>`<div class="legend-item"><div class="legend-dot" style="background:${p.color}"></div>${p.name}${p.cx?' ⚡':''}</div>`).join('');
+  if(needCx) leg.innerHTML+=`<div class="legend-item" style="margin-left:auto;padding:3px 10px;background:#fff3cd;color:#856404;border-radius:20px;font-weight:600;">⚡ = compressed to fit deadline</div>`;
+}
+</script>
+</body>
+</html>
